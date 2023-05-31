@@ -156,28 +156,14 @@ if __name__ == '__main__':
     for cls in labels_sorted_by_freq:
         permutation.extend(indices[cls])
 
-    def context_str(idx, max_len=500):
-        sample, token_idx = get_context(idx)
-        prompt = sample["split_by_token"][:token_idx]
-        prompt = "".join(prompt)
-        token = sample["split_by_token"][token_idx]
-        if len(prompt) > max_len:
-            prompt = "..." + prompt[-max_len:]
-        return prompt + "<|" + token + "|>"
-
     matrix_filename = Path(matrix_path).parts[-1]
-    clustersdir = Path(output_dir) / f"{num_clusters}_{eigen_tol}_{matrix_filename}v1"
-    clustersdir.mkdir(parents=True, exist_ok=True)
+    clusterpath = Path(output_dir) / f"{num_clusters}_{eigen_tol}_{matrix_filename}v1.pt"
 
-    idxs_of_clusters = defaultdict(list)
-    for i, label in tqdm(list(enumerate(labels_sorted_by_freq)), desc="Saving contexts", disable=not verbose):
-        # create subdirectory of cluster
-        clusterpath = clustersdir / Path((5-len(str(i)))*"0"+str(i)+".txt")
-        clusterstr = ""
+    clusters_data = defaultdict(list)
+    for i, label in tqdm(list(enumerate(labels_sorted_by_freq)), desc="Finding contexts", disable=not verbose):
         for idx_i in indices[label]:
             idx = token_idxs[idx_i]
-            idxs_of_clusters[i].append(idx)
-            clusterstr += context_str(idx) + "\n"+"-"*40+"\n"
-        with open(clusterpath, "w") as f:
-            f.write(clusterstr)
-    torch.save(idxs_of_clusters, clustersdir / "idxs_of_clusters.pt")
+            doc, token_idx_within_doc = get_context(idx)
+            tokens = doc["split_by_token"]
+            clusters_data[i].append((tokens, token_idx_within_doc))
+    torch.save(clusters_data, clusterpath)
