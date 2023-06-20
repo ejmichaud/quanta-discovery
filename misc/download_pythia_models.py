@@ -38,7 +38,8 @@ if __name__ == '__main__':
     # STEPS = list(range(1000, 144000, 1000))[:-1]
     STEPS = [143000]
     MODEL_NAME = model_names[0]
-    CACHE_DIR = os.path.join(os.path.expanduser("~"), "pythia-models")
+    CACHE_DIR = "/om/user/ericjm/pythia-models/"
+    # CACHE_DIR = os.path.join(os.path.expanduser("~"), "pythia-models")
 
     for step in tqdm(STEPS):
         model = GPTNeoXForCausalLM.from_pretrained(

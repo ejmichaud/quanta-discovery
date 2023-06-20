@@ -157,7 +157,9 @@ if __name__ == '__main__':
         permutation.extend(indices[cls])
 
     matrix_filename = Path(matrix_path).parts[-1]
-    clusterpath = Path(output_dir) / f"{num_clusters}_{eigen_tol}_{matrix_filename}v1.pt"
+    # clean the extension off
+    matrix_filename = os.path.splitext(matrix_filename)[0]
+    clusterpath = Path(output_dir) / f"{num_clusters}_{eigen_tol}_{matrix_filename}.pt"
 
     clusters_data = defaultdict(list)
     for i, label in tqdm(list(enumerate(labels_sorted_by_freq)), desc="Finding contexts", disable=not verbose):
