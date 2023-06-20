@@ -53,12 +53,16 @@ if __name__ == '__main__':
     parser.add_argument("--before", type=int, default=200)
     parser.add_argument("--after", type=int, default=20)
     parser.add_argument("--cluster", type=int, default=100)
+    parser.add_argument("--samples", type=int, default=-1, 
+                        help="number of samples from the cluster to include, defaults to all of them (-1)")
 
     args = parser.parse_args()
     output_dir = args.output_dir
     
     clusters = torch.load(args.clusters)
     cluster = clusters[args.cluster]
+
+    samples = len(cluster) if args.samples == -1 else min(args.samples, len(cluster))
 
     # for tokens, token_idx in cluster:
     #     print("".join(tokens[:token_idx]) + f"<|{tokens[token_idx]}|>")
@@ -74,7 +78,7 @@ if __name__ == '__main__':
     post_answer_text_color = "#CCC"
 
     tokens_html = []
-    for tokens, token_idx in cluster:
+    for tokens, token_idx in cluster[:samples]:
         sample_html = "<div class='sample'>\n"
         tokens_before = min(args.before, token_idx)
         tokens_after = min(args.after, len(tokens) - token_idx - 1)
