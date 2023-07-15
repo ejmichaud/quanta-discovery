@@ -148,8 +148,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     output_dir = args.output_dir
     
-    clusters = torch.load(args.clusters)
-    cluster = clusters[0]
+    clusters, _ = torch.load(args.clusters)
     # import code; code.interact(local=locals())
 
     clusters_html = []

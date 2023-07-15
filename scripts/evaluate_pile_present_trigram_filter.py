@@ -1,11 +1,17 @@
 
 """
-Computes losses on the Pile test set, and saves them to a file.
+Computes a filter over the tokens, with the goal of eliminating tokens that
+can be predicted via copying induction on their context. In the resulting array,
+`True` (1) indicates that the token is the third token in a trigram that occurs
+earlier in the context, and `False` (0) otherwise.
 
-Let's try a more loose criteria for induction. Instead of the bigram
-being unique, let's just require that the bigram occurs earlier in the
-context. This will more aggressively filter out tokens that can be
-predicted via copying induction.
+...
+One could also imagine using a criteria which required the trigram to be unique,
+rather than merely present, in the sense that if the first two tokens of the trigram
+are the first two tokens of some other trigram in the context, then the simplest
+possible induction copying scheme wouldn't uniquely determine the third token of the
+trigram anymore. But this script uses the `present` criteria which filters out more tokens
+than this `unique` criteria would.
 """
 
 from collections import defaultdict
@@ -22,27 +28,7 @@ import datasets
 from transformers import AutoTokenizer
 
 
-# def target_bigram_occurs_earlier_and_uniquely_in_context(context, token_idx):
-#     """Determines whether the token corresponding to `idx` can be uniquely
-#     predicted from copying induction on its context. If the target token is the 
-#     second token in a bigram that occured earlier in the context, and the token that
-#     preceeded it does not occur as the first token in a different bigram in the
-#     context, then the target token can be uniquely predicted from copying induction.
-#     Returns True if this is the case, False otherwise.
-#     """
-#     doc_tokens = context
-#     tbigram = (doc_tokens[token_idx-1], doc_tokens[token_idx])
-#     earlier_occurences_of_bigram = 0
-#     for i in range(1, token_idx-1):
-#         cbigram = (doc_tokens[i-1], doc_tokens[i])
-#         if cbigram == tbigram:
-#             earlier_occurences_of_bigram += 1
-#         elif tbigram[0] == cbigram[0] and tbigram[1] != cbigram[1]:
-#             return False # first token in target bigram occurs as the first token in a differnet bigram of the context
-#     return earlier_occurences_of_bigram > 0 
-
-
-def evaluate_pile_induction_criterias(model_name, step, num_documents, cache_dir, pile_canonical, verbose=True):
+def evaluate_pile_present_trigram_filter(model_name, step, num_documents, cache_dir, pile_canonical, verbose=True):
     """For tokens in the Pile test set determines whether they can be predicted via
     (copying) induction on their context. Saves the results as a boolean array to a file.
     
@@ -68,18 +54,18 @@ def evaluate_pile_induction_criterias(model_name, step, num_documents, cache_dir
         if prompt:
             tokens = tokenizer(prompt, return_tensors='pt', max_length=1024, truncation=True)
             doc_tokens = tokens.input_ids[0].tolist()
-            bigram_seconds_from_first = defaultdict(list)
+            document_trigrams = defaultdict(int)
             criterias = []
-            for i in range(1, len(doc_tokens)):
-                bigram0 = doc_tokens[i-1]
-                bigram1 = doc_tokens[i]
-                # if bigram1 in bigram_seconds_from_first[bigram0] and len(set(bigram_seconds_from_first[bigram0])) == 1: # bigram occurs earlier and uniquely in context
-                if bigram1 in bigram_seconds_from_first[bigram0]: # bigram occurs earlier in context
-                    criterias.append(True) 
-                else:
-                    criterias.append(False)
-                bigram_seconds_from_first[bigram0].append(bigram1)
-            results.append(criterias)
+            if len(doc_tokens) >= 2: # must be at least two tokens to have a loss
+                criterias.append(False) # first predictable token cannot be predicted from induction
+                for i in range(2, len(doc_tokens)):
+                    trigram = tuple(doc_tokens[i-2:i+1])
+                    if trigram in document_trigrams:
+                        criterias.append(True)
+                    else:
+                        criterias.append(False)
+                    document_trigrams[trigram] += 1
+                results.append(criterias)
         else:
             results.append([])
     total_length = sum(len(result) for result in results)
@@ -91,7 +77,7 @@ def evaluate_pile_induction_criterias(model_name, step, num_documents, cache_dir
         results_arr[j:j+len(x)] = torch.tensor(x, dtype=torch.bool)
         j += len(x)
 
-    torch.save(results_arr, os.path.join(cache_dir, model_name, f"step{step}", f"{num_documents}_docs_{total_length}_tokens_criterias.pt"))
+    torch.save(results_arr, os.path.join(cache_dir, model_name, f"step{step}", f"{num_documents}_docs_{total_length}_tokens_present_trigram_filter.pt"))
 
 
 if __name__ == '__main__':
@@ -103,8 +89,5 @@ if __name__ == '__main__':
     parser.add_argument('--pile_canonical', type=str, default="/om/user/ericjm/the_pile/the_pile_test_canonical_200k")
     parser.add_argument("-v", "--verbose", help="print progress bar", default=False, action="store_true")
     args = parser.parse_args()
-    evaluate_pile_induction_criterias(**vars(args))
-
-
-
+    evaluate_pile_present_trigram_filter(**vars(args))
 

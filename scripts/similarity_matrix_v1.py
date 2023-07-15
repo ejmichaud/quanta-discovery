@@ -61,9 +61,8 @@ if __name__ == '__main__':
                         help="path to the canonically preprocessed Pile test set")
     parser.add_argument("--loss_threshold", type=float, default=1.0,
                         help="threshold for loss (bits) to be a candidate token")
-    parser.add_argument("-f", "--filter_induction", action="store_true", 
-                        help="filter induction copying tokens based on unique bigrams", 
-                        default=False)
+    parser.add_argument("--filter", type=str, default=None,
+                        help="path to filter file")
     parser.add_argument("--skip", type=int, default=1, 
                         help="use only every `skip` tokens compatible with threshold & filtering")
     parser.add_argument("--num_tokens", type=int, default=10000, 
@@ -86,7 +85,7 @@ if __name__ == '__main__':
     num_tokens = args.num_tokens
     block_len = args.block_len
     output_dir = args.output_dir
-    filter_induction = args.filter_induction
+    filter = args.filter
     verbose = args.verbose
 
     # ----- load model and tokenizer -----
@@ -146,18 +145,16 @@ if __name__ == '__main__':
     max_i = max(list(range(len(losses_cached))), key=lambda i: int(losses_cached[i].split("_")[0]))
     docs, tokens = int(losses_cached[max_i].split("_")[0]), int(losses_cached[max_i].split("_")[2])
     losses = torch.load(os.path.join(particular_model_cache_dir, f"{docs}_docs_{tokens}_tokens_losses.pt"))
-    c = 1 / np.log(2) # nats to bits conversion
+    c = 1 / np.log(2) # for nats to bits conversion
 
-    if filter_induction:
-        # we need to filter out the induction losses
-        # first load the induction losses
-        criterias = torch.load(os.path.join(particular_model_cache_dir, f"{docs}_docs_{tokens}_tokens_criterias.pt"))
+    if filter:
+        criterias = torch.load(filter)
         token_idxs = ((losses < (loss_threshold / c)) & (~criterias)).nonzero().flatten()
     else:
         token_idxs = (losses < (loss_threshold / c)).nonzero().flatten()
     token_idxs = token_idxs[::skip]
     token_idxs = token_idxs[:num_tokens].tolist()
-    assert len(token_idxs) == num_tokens, "not enough tokens meeting criteria to sample from"
+    assert len(token_idxs) == num_tokens, "not enough tokens meeting loss threshold (and filter) to sample from"
     
     # ----- make the magic happen -----
     def get_flattened_gradient(model, param_subset):

@@ -45,20 +45,11 @@ if __name__ == '__main__':
     parser.add_argument("--pile_canonical", type=str,
                     default="/om/user/ericjm/the_pile/the_pile_test_canonical_200k",
                     help="path to the canonically preprocessed Pile test set")
-    # parser.add_argument("--loss_threshold", type=float, default=1.0, 
-    #                     help="threshold for loss (bits) to be a candidate token")
-    # parser.add_argument("-f", "--filter_induction", action="store_true", 
-    #                     help="filter induction copying tokens based on unique bigrams", 
-    #                     default=False)
-    # parser.add_argument("--skip", type=int, default=1, 
-    #                     help="use only every `skip` tokens compatible with threshold & filtering")
-    # parser.add_argument("--num_tokens", type=int, default=10000, 
-    #                     help="number of tokens to use")
-    # parser.add_argument("--block_len", type=int, default=250, 
-    #                     help="number of samples to use per block when computing similarities")
     parser.add_argument("--output_dir", type=str, default="/om2/user/ericjm/quanta-discovery/results")
     parser.add_argument("--num_clusters", type=int, default=500)
     parser.add_argument("--eigen_tol", default="auto") # TODO: add argument for clustering tolerance
+    parser.add_argument("--n_init", type=int, default=30)
+    parser.add_argument("--random_state", type=int, default=0)
     parser.add_argument("-v", "--verbose", action="store_true", 
                         help="print progress bars", default=False)
 
@@ -70,14 +61,11 @@ if __name__ == '__main__':
     # device = torch.device(args.device)
     cache_dir = args.cache_dir
     pile_canonical = args.pile_canonical
-    # loss_threshold = args.loss_threshold
-    # filter_induction = args.filter_induction
-    # skip = args.skip
-    # num_tokens = args.num_tokens
-    # block_len = args.block_len
     output_dir = args.output_dir
     num_clusters = args.num_clusters
     eigen_tol = args.eigen_tol
+    n_init = args.n_init
+    random_state = args.random_state
     verbose = args.verbose
 
     # ----- load model and tokenizer -----
@@ -138,9 +126,12 @@ if __name__ == '__main__':
 
     if verbose:
         print("clustering...")
+    np.random.seed(random_state)
     clusters_labels = sklearn.cluster.SpectralClustering(n_clusters=num_clusters, 
                                                         affinity='precomputed',
                                                         eigen_tol=eigen_tol,
+                                                        n_init=n_init,
+                                                        random_state=random_state,
                                                         assign_labels='kmeans').fit_predict(C)
 
     label_frequencies = defaultdict(int)
@@ -168,4 +159,6 @@ if __name__ == '__main__':
             doc, token_idx_within_doc = get_context(idx)
             tokens = doc["split_by_token"]
             clusters_data[i].append((tokens, token_idx_within_doc))
-    torch.save(clusters_data, clusterpath)
+    torch.save((clusters_data, clusters_labels), clusterpath)
+
+
