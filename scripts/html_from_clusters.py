@@ -79,7 +79,7 @@ function initialize(data) {
     data.clusters.forEach((cluster, index) => {
         var option = document.createElement('option');
         option.value = index;
-        option.text = 'Cluster ' + (index + 1);
+        option.text = 'Cluster ' + (index);
         selector.appendChild(option);
     });
 
