@@ -5,7 +5,7 @@ Exploring "quanta" of LLM capabilities/internals
 
 You'll first need to choose a `cache_dir` directory and a `pile-canonical` directory. The `cache_dir` directory is where we store the models, their tokenizers, loss data, etc. The `pile-canonical` directory is where we store the tokenized version of The Pile dataset.
 
-You can populate your `pile-canonical` file by first downloading The Pile's test set at `https://the-eye.eu/public/AI/pile/test.jsonl.zst`. Then run:
+You can populate your `pile-canonical` directory by first downloading The Pile's test set at `https://the-eye.eu/public/AI/pile/test.jsonl.zst`. Then run:
 ```
 python misc/create_pile_canonical.py --cache_dir <path/to/cache_dir> \
     --directory_containing_zst <path/to/directory_containing_zst> \
@@ -17,7 +17,7 @@ What `pile-canonical` establishes is a canonical indexing into the *predictable*
 
 I've been using a conda environment from a previous project, so I'm not sure what the minimal requirements are, but you should be able to figure them out with some reading or trial and error. Let's soon make a `requirements.txt` file or `environment.yml` file for the repo.
 
-Running the following scripts will approximately reproduce the results in the paper, although for some reason not exactly. I'm not sure why, but working on it. Due to randomness in the spectral clustering algorithm however, we may never be able to exactly reproduce the clusters from the paper -- it looks like I didn't set a `random_state` value for the clustering algorithm.
+Running the following scripts will approximately reproduce the results in the paper, although for some reason not exactly. I'm not sure why, but working on it. Due to randomness in the spectral clustering algorithm however, it may be impossible to exactly reproduce the clusters from the paper -- it looks like I didn't set a `random_state` value for the clustering algorithm.
 
 First we compute the model's loss values across a large number (20k) of documents in The Pile test set:
 ```
