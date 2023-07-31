@@ -48,7 +48,6 @@ python scripts/similarity_matrix_v1.py --model_name pythia-70m-v0 \
     --cache_dir <path/to/cache_dir> \
     --pile_canonical <path/to/pile-canonical> \
     --loss_threshold 0.14426950408889636 \
-    --num_documents 10000 \
     --filter <path/to/cache_dir/model_name/step/filter_name.pt> \
     --skip 50 \
     --num_tokens 10000 \
@@ -63,7 +62,7 @@ python scripts/clusters_from_similarity_matrix_v1.py </path/to/output_dir/matrix
     --cache_dir <path/to/cache_dir> \
     --pile_canonical <path/to/pile-canonical> \
     --output_dir <path/to/output_dir> \
-    --num-clusters 400 \
+    --num_clusters 400 \
     --n_init 30 \
     --random_state 0 \
     --verbose
@@ -75,7 +74,7 @@ Lastly we can visualize the clusters as a website:
 python scripts/html_from_clusters.py <path/to/output_dir/output_from_previous_script.pt> \
     --output_dir <path/to/output_dir> \
     --before 300 \
-    --after 0 \
+    --after 0
 ```
 This saves a single html file which contains the samples for each cluster. You can navigate between clusters using left and right arrow keys or using the dropdown. Note that this file will be tens of megabytes.
 

@@ -122,6 +122,7 @@ if __name__ == '__main__':
 
     token_idxs, C = torch.load(matrix_path)
     C = C.numpy()
+    C = np.clip(C, -1, 1)
     C = 1 - np.arccos(C) / np.pi
 
     if verbose:
