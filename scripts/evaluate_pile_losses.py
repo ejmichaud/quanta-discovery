@@ -1,6 +1,8 @@
 
 """
 Computes losses on the Pile test set, and saves them to a file.
+
+Losses are in nats.
 """
 
 from collections import defaultdict
